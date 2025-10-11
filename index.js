@@ -3,7 +3,7 @@ class MockPromise {
     this.state = "pending";
     this.value;
     this.reason;
-    callback(this._resolve, this._reject);
+    callback(this._resolve.bind(this), this._reject.bind(this));
   }
 
   _resolve(value, reason) {
@@ -21,13 +21,13 @@ class MockPromise {
   }
 
   then(cb) {
-    if (this.state === "fulfiiled") {
+    if (this.state === "fulfilled") {
       // return this(cb);
       // return new MockPromise(cb); -> then의 콜백은 인자로 resolve, reject를 가지는 구조가 아니다.
 
       // cb의 리턴값을 다음 프로미스(새로운 promise?)의 콜백 인자로 넘겨줌
       if (typeof cb === "function") {
-        this.state = cb(this.state);
+        this.value = cb(this.value);
       }
 
       return this;
