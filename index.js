@@ -91,6 +91,15 @@ class MockPromise {
       });
     }
   }
+
+  catch(onRejected) {
+    return this.then(null, onRejected);
+  }
+
+  finally(callback) {
+    callback();
+    return this;
+  }
 }
 
 function main() {
@@ -121,7 +130,29 @@ function main() {
     new MockPromise((res) => res()).then(() => console.log("micro task - 2"));
     console.log("end");
   }
-  step3();
+  // step3();
+
+  function step4() {
+    new MockPromise((_, reject) => reject(new Error("X")))
+      .then(
+        () => "unreachable",
+        (err) => "recovered"
+      ) // onRejected 성공 ⇒ resolve
+      .then((v) => {
+        console.log(v);
+        return v;
+      }) // 'recovered'
+      .catch(() => console.log("should not run"));
+  }
+  // step4();
+
+  function step5() {
+    new MockPromise((_, rej) => rej("boom"))
+      .catch((e) => "handled")
+      .finally(() => console.log("cleanup"))
+      .then((v) => console.log(v)); // 'handled'
+  }
+  step5();
 }
 
 main();
