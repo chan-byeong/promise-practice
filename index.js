@@ -46,7 +46,12 @@ class MockPromise {
           try {
             if (state === "fulfilled") {
               if (arg instanceof MockPromise) {
-                arg.then(onFulfilled).then(promise._resolve);
+                arg
+                  .then(onFulfilled, onRejected)
+                  .then(
+                    promise._resolve.bind(promise),
+                    promise._reject.bind(promise)
+                  );
               } else {
                 promise._resolve(onFulfilled(arg));
               }
