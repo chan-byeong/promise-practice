@@ -16,7 +16,6 @@ class MockPromise {
     if (this.state !== "pending") return;
     this.value = value;
     this.state = "fulfilled";
-
     // queue 작업 실행
     this._onStateChange();
   }
@@ -39,13 +38,18 @@ class MockPromise {
 
   then(onFulfilled, onRejected) {
     if (this.state === "pending") {
-      const promise = new MockPromise(() => console.log("mock promise"));
+      const promise = new MockPromise(() => {});
 
       const executor = (promise) => (state, arg) => {
+        // value === arg가 promise인 경우
         queueMicrotask(() => {
           try {
             if (state === "fulfilled") {
-              promise._resolve(onFulfilled(arg));
+              if (arg instanceof MockPromise) {
+                arg.then(onFulfilled).then(promise._resolve);
+              } else {
+                promise._resolve(onFulfilled(arg));
+              }
             } else {
               promise._resolve(onRejected(arg));
             }
@@ -92,8 +96,8 @@ function main() {
   } // later: 50ms 뒤 fulfilled되는 프로미스 반환.
 
   new MockPromise((res) => res(1))
-    .then((v) => later(v * 2))
-    .then((v) => later(v + 3)) // flattening -> promise 속성을 자세히 모르는 듯.
+    .then((v) => later(v * 2)) // MockPromise { value = 1 }
+    .then((v) => later(v + 3)) // MockPromise { value = MockPromise }
     .then((v) => console.log(v));
 }
 
