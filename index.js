@@ -12,6 +12,14 @@ class MockPromise {
     }
   }
 
+  static resolve(value) {
+    return new this((res) => res(value));
+  }
+
+  static reject(value) {
+    return new this((_, rej) => rej(value));
+  }
+
   _resolve(value) {
     if (this.state !== "pending") return;
     this.value = value;
@@ -87,23 +95,33 @@ class MockPromise {
 
 function main() {
   // step - 1
-  console.log("step - 1");
-  const p = new MockPromise((resolve) => resolve(1));
-  p.then((v) => v * 10)
-    .then((v) => v + 10)
-    .then((v) => console.log(v)); // 20
-
-  console.log("step - 2");
+  function step1() {
+    const p = new MockPromise((resolve) => resolve(1));
+    p.then((v) => v * 10)
+      .then((v) => v + 10)
+      .then((v) => console.log(v)); // 20
+  }
 
   // step - 2
-  function later(v, t = 50) {
-    return new MockPromise((res) => setTimeout(() => res(v), t));
-  } // later: 50ms 뒤 fulfilled되는 프로미스 반환.
+  function step2() {
+    function later(v, t = 50) {
+      return new MockPromise((res) => setTimeout(() => res(v), t));
+    } // later: 50ms 뒤 fulfilled되는 프로미스 반환.
 
-  new MockPromise((res) => res(1))
-    .then((v) => later(v * 2)) // MockPromise { value = 1 }
-    .then((v) => later(v + 3)) // MockPromise { value = MockPromise }
-    .then((v) => console.log(v));
+    new MockPromise((res) => res(1))
+      .then((v) => later(v * 2)) // MockPromise { value = 1 }
+      .then((v) => later(v + 3)) // MockPromise { value = MockPromise }
+      .then((v) => console.log(v));
+  }
+
+  function step3() {
+    console.log("start");
+    setTimeout(() => console.log("macro task"), 0);
+    MockPromise.resolve().then(() => console.log("micro task - 1"));
+    new MockPromise((res) => res()).then(() => console.log("micro task - 2"));
+    console.log("end");
+  }
+  step3();
 }
 
 main();
